@@ -2,7 +2,7 @@ name: Go Test
 
 on:
   pull_request:
-    path: ['go/**/*.go'] 
+    paths: ['go/**/*.go'] 
 
 jobs:
   test:
