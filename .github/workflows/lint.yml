@@ -22,3 +22,9 @@ jobs:
       - name: Run actionlint
         run: |
             docker run --rm -v "$(pwd):$(pwd)" -w "$(pwd)" rhysd/actionlint:latest
+
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - run: | 
+          echo '::debug:: Linting completed successfully.'
