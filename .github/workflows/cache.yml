@@ -1,18 +1,89 @@
-name: Cache
-on: push
+name: Cache compare demo
+on:
+  workflow_dispatch:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  cache:
+  with-restore:
+    name: with restore-keys
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+
+      - name: mark start
+        id: t0
+        run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: cache (with restore-keys)
+        id: cache
+        uses: actions/cache@v4
         with:
-          key: test-${{ runner.os }}-${{ github.sha }} # Cache key
-          path: ${{ github.workspace }}/dummy          # Cache path
-          restore-keys: |                              # Restore key
-            test-${{ runner.os }}-
-      - run: |
-            if [[ -f "${GITHUB_WORKSPACE}/dummy" ]]; then exit 0; fi
-            dd if=/dev/urandom of="${GITHUB_WORKSPACE}/dummy" bs=1M count=10
-            sleep 30
-      - run: ls -lh "${GITHUB_WORKSPACE}/dummy"
+          key: demo-${{ runner.os }}-${{ github.sha }}
+          path: ${{ github.workspace }}/dummy
+          restore-keys: |
+            demo-${{ runner.os }}-
+
+      - name: build (generate when cache miss)
+        run: |
+          if [[ -f "${GITHUB_WORKSPACE}/dummy" ]]; then
+            echo "✔ dummy exists (cache hit)."
+          else
+            echo "✖ cache miss. generating 60MB dummy file (simulate heavy step)..."
+            dd if=/dev/urandom of="${GITHUB_WORKSPACE}/dummy" bs=1M count=60 status=none
+            # 重い処理っぽさを出す
+            sleep 10
+          fi
+
+      - name: show result
+        run: |
+          ls -lh "${GITHUB_WORKSPACE}/dummy"
+          echo "cache-hit: ${{ steps.cache.outputs.cache-hit }}"
+
+      - name: mark end & duration
+        run: |
+          end=$(date +%s)
+          start="${{ steps.t0.outputs.start }}"
+          echo "duration=$((end-start)) sec" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  no-restore:
+    name: without restore-keys
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: mark start
+        id: t0
+        run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: cache (NO restore-keys)
+        id: cache
+        uses: actions/cache@v4
+        with:
+          key: demo-${{ runner.os }}-${{ github.sha }}
+          path: ${{ github.workspace }}/dummy
+          # restore-keys をあえて指定しない
+
+      - name: build (generate when cache miss)
+        run: |
+          if [[ -f "${GITHUB_WORKSPACE}/dummy" ]]; then
+            echo "✔ dummy exists (cache hit)."
+          else
+            echo "✖ cache miss. generating 60MB dummy file (simulate heavy step)..."
+            dd if=/dev/urandom of="${GITHUB_WORKSPACE}/dummy" bs=1M count=60 status=none
+            sleep 10
+          fi
+
+      - name: show result
+        run: |
+          ls -lh "${GITHUB_WORKSPACE}/dummy"
+          echo "cache-hit: ${{ steps.cache.outputs.cache-hit }}"
+
+      - name: mark end & duration
+        run: |
+          end=$(date +%s)
+          start="${{ steps.t0.outputs.start }}"
+          echo "duration=$((end-start)) sec" | tee -a "$GITHUB_STEP_SUMMARY"
