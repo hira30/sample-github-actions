@@ -65,7 +65,6 @@ jobs:
         with:
           key: demo-${{ runner.os }}-${{ github.sha }}
           path: ${{ github.workspace }}/dummy
-          # restore-keys をあえて指定しない
 
       - name: build (generate when cache miss)
         run: |
