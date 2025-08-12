@@ -12,7 +12,7 @@ jobs:
     name: with restore-keys
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: mark start
         id: t0
@@ -53,7 +53,7 @@ jobs:
     name: without restore-keys
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: mark start
         id: t0
